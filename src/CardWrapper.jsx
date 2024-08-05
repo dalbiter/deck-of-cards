@@ -5,14 +5,15 @@ import axios from 'axios';
 const BASE_URL = "https://deckofcardsapi.com/api/deck"
 
 const CardWrapper = () => {
-    const [deckId, setDeckId] = useState();
+    const [deckId, setDeckId] = useState(null);
     const [drawnCards, setDrawnCards] = useState([]);
     const [startDraw, setStartDraw] = useState(false);
     const intervalRef = useRef(null);
     const drawCard =  async (deckId) => {
         try {
             const res = await axios.get(`${BASE_URL}/${deckId}/draw/`)
-            setDrawnCards([...drawnCards, {key: res.data.cards[0].code, value: res.data.cards[0].value, suit: res.data.cards[0].suit}])
+            const card = res.data.cards[0];
+            setDrawnCards([...drawnCards, {key: card.code, value: card.value, suit: card.suit, img: card.image}])
 
             if(res.data.remaining === 0) {
                 setStartDraw(false)
@@ -27,7 +28,7 @@ const CardWrapper = () => {
     useEffect(() => {
         const loadDeck = async () => {
             try {
-                const res = await axios.get(`${BASE_URL}/new/shuffle/?deck_count=1`)
+                const res = await axios.get(`${BASE_URL}/new/?deck_count=1`)
              setDeckId(res.data.deck_id)
             } catch (err) {
                 alert(err)
@@ -46,16 +47,18 @@ const CardWrapper = () => {
             intervalRef.current = null;
         }
 
-    }, [startDraw, setStartDraw, deckId]);
+    }, [startDraw]);
 
     return (
         <div>
             <button onClick={() => drawCard(deckId)}>Draw a Card</button>
             <button onClick={() => setStartDraw(true)}>Auto Draw</button>
             <button onClick={() => setStartDraw(false)}>Stop</button>
-            {drawnCards.map(({ key, value, suit }) => (
-                <Card key ={key} value={value} suit={suit} />
+            <div>
+            {drawnCards.map(({ key, value, suit, img }) => (
+                <Card key ={key} value={value} suit={suit} img={img}/>
             ))}
+            </div>  
         </div>
     );
 };
