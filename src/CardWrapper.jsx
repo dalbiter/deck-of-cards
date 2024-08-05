@@ -1,18 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Card from './Card';
 import axios from 'axios';
+
+const BASE_URL = "https://deckofcardsapi.com/api/deck"
 
 const CardWrapper = () => {
     const [deckId, setDeckId] = useState();
     const [drawnCards, setDrawnCards] = useState([]);
     const [startDraw, setStartDraw] = useState(false);
+    const intervalRef = useRef(null);
     const drawCard =  async (deckId) => {
         try {
-            console.log(deckId)
-            const res = await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/draw/`)
+            const res = await axios.get(`${BASE_URL}/${deckId}/draw/`)
             setDrawnCards([...drawnCards, {key: res.data.cards[0].code, value: res.data.cards[0].value, suit: res.data.cards[0].suit}])
-        } catch {
-            alert("Error: No cards remaining!")
+
+            if(res.data.remaining === 0) {
+                setStartDraw(false)
+                throw new Error("No cards remainig!")
+            } 
+        } catch(err) {
+            alert(err)
         }
         
     };
@@ -20,28 +27,26 @@ const CardWrapper = () => {
     useEffect(() => {
         const loadDeck = async () => {
             try {
-                const res = await axios.get(`https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1`)
+                const res = await axios.get(`${BASE_URL}/new/shuffle/?deck_count=1`)
              setDeckId(res.data.deck_id)
-            } catch {
-                alert("Not Found")
+            } catch (err) {
+                alert(err)
             }
         };
         loadDeck();
     }, []);
 
     useEffect(() => {
-        let intervalId = null;
-        console.log(startDraw)
-        if(!setStartDraw) {
-            intervalId = setInterval(() => {
-                console.log("I am in the interval")
-                drawCard(deckId)
+        if(startDraw && !intervalRef.current) {
+            intervalRef.current = setInterval(async () => {
+                 await drawCard(deckId)
             }, 1000)
         } else {
-            clearInterval(intervalId)
+            clearInterval(intervalRef.current)
+            intervalRef.current = null;
         }
 
-    }, [setStartDraw]);
+    }, [startDraw, setStartDraw, deckId]);
 
     return (
         <div>
