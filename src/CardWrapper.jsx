@@ -28,8 +28,8 @@ const CardWrapper = () => {
     useEffect(() => {
         const loadDeck = async () => {
             try {
-                const res = await axios.get(`${BASE_URL}/new/?deck_count=1`)
-             setDeckId(res.data.deck_id)
+                const res = await axios.get(`${BASE_URL}/new/shuffle/?deck_count=1`)
+                setDeckId(res.data.deck_id)
             } catch (err) {
                 alert(err)
             }
